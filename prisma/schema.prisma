@@ -21,6 +21,7 @@ model User {
   userId    Int      @id @default(autoincrement())
   email     String   @unique
   password  String
+  name      String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -30,10 +31,21 @@ model User {
 model Resume {
   resumeId  Int      @id @default(autoincrement())
   userId    Int
-  name      String
-  content   String
+  title     String
+  introduce String
+  author    String
+  status    Status   @default(APPLY)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   User User @relation(fields: [userId], references: [userId], onDelete: Cascade)
+}
+
+enum Status {
+  APPLY
+  DROP
+  PASS
+  INTERVIEW1
+  INTERVIEW2
+  FINAL_PASS
 }
