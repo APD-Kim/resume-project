@@ -2,10 +2,16 @@ import express from "express";
 import "dotenv/config";
 const app = express();
 import router from "../src/routers/user.routes.js";
-import { swaggerUi, specs } from "../modules/swagger.js";
+import { swaggerUi, specs } from "../swagger.js";
 import cookieParser from "cookie-parser";
 import resumeRouter from "../src/routers/resume.routes.js";
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(specs));
+
+app.use(
+  "/api-docs",
+  swaggerUi.serve,
+  swaggerUi.setup(specs, { explorer: true })
+);
+
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

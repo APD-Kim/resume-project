@@ -31,4 +31,7 @@ export const AuthJwt = async (req, res, next) => {
   console.log(req.locals.user);
   next();
 };
+
+
+//로그인 -> 카카오에서 제한된 입장권 줌 -> 백엔드에서 카카오에 요청을 함 -> 데이터를 받아온다
 // 인증 필요 API 호출 시 Request Header의 Authorization 값으로 JWT를 함께 넘겨줘야 합니다.

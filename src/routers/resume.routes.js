@@ -1,15 +1,6 @@
 import express from "express";
-const app = express();
-import { Prisma } from "@prisma/client";
-import bcrypt from "bcrypt";
-import {
-  checkExistEmail,
-  checkPassword,
-  checkUserEmail,
-} from "../middlewares/valid.middleware.js";
 import { prisma } from "../models/index.js";
 import "dotenv/config";
-import { sign } from "../../modules/jwt.js";
 import { AuthJwt } from "../middlewares/auth.middleware.js";
 
 const router = express.Router();
@@ -102,4 +93,107 @@ router.delete("/resume/:resumeId", AuthJwt, async (req, res, next) => {
   res.status(200).json({ message: "삭제 완료하였습니다." });
 });
 
+/**
+ * @swagger
+ * paths:
+ *  /resume:
+ *    post:
+ *      tags: [Resume]
+ *      summary: Create a new resume
+ *      security:
+ *        - bearerAuth: []
+ *      requestBody:
+ *        required: true
+ *        content:
+ *          application/json:
+ *            schema:
+ *              type: object
+ *              required:
+ *                - title
+ *                - introduce
+ *              properties:
+ *                title:
+ *                  type: string
+ *                introduce:
+ *                  type: string
+ *      responses:
+ *        "201":
+ *          description: Resume created successfully
+ *    get:
+ *      tags: [Resume]
+ *      summary: Get all resumes
+ *      parameters:
+ *        - in: query
+ *          name: orderKey
+ *          schema:
+ *            type: integer
+ *          required: true
+ *          description: Order key for sorting
+ *        - in: query
+ *          name: orderValue
+ *          schema:
+ *            type: string
+ *          required: true
+ *          description: Order value for sorting (asc or desc)
+ *      responses:
+ *        "200":
+ *          description: A list of resumes
+ *  /resume/{resumeId}:
+ *    get:
+ *      tags: [Resume]
+ *      summary: Get a specific resume by its ID
+ *      parameters:
+ *        - in: path
+ *          name: resumeId
+ *          required: true
+ *          schema:
+ *            type: integer
+ *          description: Unique ID of the resume
+ *      responses:
+ *        "200":
+ *          description: Resume details
+ *    patch:
+ *      tags: [Resume]
+ *      summary: Update a specific resume
+ *      security:
+ *        - bearerAuth: []
+ *      parameters:
+ *        - in: path
+ *          name: resumeId
+ *          required: true
+ *          schema:
+ *            type: integer
+ *          description: Unique ID of the resume
+ *      requestBody:
+ *        required: true
+ *        content:
+ *          application/json:
+ *            schema:
+ *              type: object
+ *      responses:
+ *        "200":
+ *          description: Resume updated successfully
+ *    delete:
+ *      tags: [Resume]
+ *      summary: Delete a specific resume
+ *      security:
+ *        - bearerAuth: []
+ *      parameters:
+ *        - in: path
+ *          name: resumeId
+ *          required: true
+ *          schema:
+ *            type: integer
+ *          description: Unique ID of the resume
+ *      responses:
+ *        "200":
+ *          description: Resume deleted successfully
+ *
+ * components:
+ *  securitySchemes:
+ *    bearerAuth:
+ *      type: http
+ *      scheme: bearer
+ *      bearerFormat: JWT
+ */
 export default router;

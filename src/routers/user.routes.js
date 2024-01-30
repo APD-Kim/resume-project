@@ -27,8 +27,6 @@ router.post("/sign-up", checkExistEmail, async (req, res, next) => {
       .json({ messsage: "비밀번호를 다시 한번 확인해주세요." });
   }
   const hashedPassword = await bcrypt.hash(password, 10);
-  console.log(hashedPassword);
-
   const user = await prisma.user.create({
     data: {
       email,
@@ -40,6 +38,8 @@ router.post("/sign-up", checkExistEmail, async (req, res, next) => {
   delete response.password;
   res.status(201).json({ data: response });
 });
+
+
 
 router.post("/login", checkUserEmail, checkPassword, async (req, res, next) => {
   const { email, password } = req.body;
@@ -62,5 +62,64 @@ router.get("/myprofile", AuthJwt, async (req, res, next) => {
   delete response.password;
   res.status(200).json({ data: response });
 });
+
+/* GET sign in page. */
+/**
+ * @swagger
+ * paths:
+ *  /sign-up:
+ *   post:
+ *     tags: [User]
+ *     summary: 사용자 등록
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *               passwordCheck:
+ *                 type: string
+ *               name:
+ *                 type: string
+ *     responses:
+ *       "201":
+ *         description: 사용자 등록 성공
+ *       "400":
+ *         description: 잘못된 요청
+ *
+ *  /login:
+ *   post:
+ *     tags: [User]
+ *     summary: 로그인
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *     responses:
+ *       "201":
+ *         description: 로그인 성공
+ *       "400":
+ *         description: 잘못된 요청
+ *
+ *  /myprofile:
+ *   get:
+ *     tags: [User]
+ *     summary: 내 프로필 정보
+ *     responses:
+ *       "200":
+ *         description: 프로필 정보 조회 성공
+ */
 
 export default router;
