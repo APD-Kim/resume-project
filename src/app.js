@@ -1,10 +1,15 @@
 import express from "express";
 import "dotenv/config";
-const app = express();
 import router from "../src/routers/user.routes.js";
 import { swaggerUi, specs } from "../swagger.js";
 import cookieParser from "cookie-parser";
 import resumeRouter from "../src/routers/resume.routes.js";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const app = express();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 app.use(
   "/api-docs",
@@ -20,6 +25,10 @@ app.use(router);
 
 app.get("/", function (req, res) {
   res.send("Hello World");
+});
+
+app.get("/oauth", (req, res) => {
+  res.sendFile(path.join(__dirname, "index.html"));
 });
 
 app.listen(process.env.PORT, () => {

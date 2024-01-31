@@ -8,7 +8,7 @@ import {
 } from "../middlewares/valid.middleware.js";
 import { prisma } from "../models/index.js";
 import "dotenv/config";
-import { sign } from "../../modules/jwt.js";
+import { sign, signAdmin } from "../../modules/jwt.js";
 import { AuthJwt } from "../middlewares/auth.middleware.js";
 const app = express();
 const router = express.Router();
@@ -39,8 +39,6 @@ router.post("/sign-up", checkExistEmail, async (req, res, next) => {
   res.status(201).json({ data: response });
 });
 
-
-
 router.post("/login", checkUserEmail, checkPassword, async (req, res, next) => {
   const { email, password } = req.body;
   console.log(req.user);
@@ -54,9 +52,37 @@ router.post("/login", checkUserEmail, checkPassword, async (req, res, next) => {
   });
   return res.status(201).json({ data: jwtToken.token });
 });
+//login 후 admin 권한 요청이기 때문에 checkPassword 필요없음.
+router.post("/request-admin", AuthJwt, async (req, res, next) => {
+  const { secretKey } = req.body;
+  const { userId, role } = req.locals.user;
+  if (secretKey !== process.env.ADMIN_SECRET_KEY) {
+    return res.status(401).json({ message: "비밀 키가 틀렸습니다." });
+  }
+  if (role !== "admin") {
+    const result = await prisma.user.update({
+      where: {
+        userId: +userId,
+      },
+      data: {
+        role: "admin",
+      },
+    });
+  }
+  const adminToken = await signAdmin(req.locals.user);
+  console.log(adminToken);
+  const bearerToken = `Bearer ${adminToken.token}`;
+
+  const cookie = res.cookie("Admin", bearerToken, {
+    httpOnly: true,
+    maxAge: 1000 * 60 * 60 * 12,
+  });
+  console.log(cookie);
+  return res.status(200).json({ message: "관리자로 승격되었습니다." });
+});
 
 router.get("/myprofile", AuthJwt, async (req, res, next) => {
-  console.log(req.locals.user);
+  console.log(req.locals.user.userId);
   const user = req.locals.user;
   const response = { ...user };
   delete response.password;
