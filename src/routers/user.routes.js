@@ -10,12 +10,164 @@ import "dotenv/config";
 import { sign, signAdmin, verify, signRefresh } from "../../modules/jwt.js";
 import { AuthJwt } from "../middlewares/auth.middleware.js";
 import mail from "../../modules/nodemailer.js";
-import client from "../../config/redis.js";
 const router = express.Router();
+
+/**
+ * @swagger
+ * /easy-sign-up:
+ *   post:
+ *     tags: [User]
+ *     summary: 간편 사용자 등록
+ *     description: 이메일, 비밀번호, 이름을 사용하여 사용자를 등록합니다.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *               - passwordCheck
+ *               - name
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 description: 사용자의 이메일
+ *               password:
+ *                 type: string
+ *                 format: password
+ *                 description: 사용자의 비밀번호
+ *               passwordCheck:
+ *                 type: string
+ *                 format: password
+ *                 description: 비밀번호 확인
+ *               name:
+ *                 type: string
+ *                 description: 사용자의 이름
+ *     responses:
+ *       "201":
+ *         description: 사용자 등록 성공
+ *       "400":
+ *         description: 잘못된 요청 (비밀번호 검증 실패 등)
+ */
+
+/**
+ * @swagger
+ * paths:
+ *  /sign-up:
+ *    post:
+ *      tags: [User]
+ *      summary: 사용자 등록(이메일)
+ *      requestBody:
+ *        required: true
+ *        content:
+ *          application/json:
+ *            schema:
+ *              type: object
+ *              properties:
+ *                email:
+ *                  type: string
+ *                password:
+ *                  type: string
+ *                passwordCheck:
+ *                  type: string
+ *                name:
+ *                  type: string
+ *      responses:
+ *        "201":
+ *          description: 사용자 등록 성공
+ *        "400":
+ *          description: 잘못된 요청
+ *
+ *  /login:
+ *    post:
+ *      tags: [User]
+ *      summary: 로그인
+ *      requestBody:
+ *        required: true
+ *        content:
+ *          application/json:
+ *            schema:
+ *              type: object
+ *              properties:
+ *                email:
+ *                  type: string
+ *                password:
+ *                  type: string
+ *      responses:
+ *        "201":
+ *          description: 로그인 성공
+ *        "400":
+ *          description: 잘못된 요청
+ *
+ *  /accessToken:
+ *    post:
+ *      tags: [User]
+ *      summary: 액세스 토큰 재발급
+ *      responses:
+ *        "200":
+ *          description: 재발급 완료
+ *
+ *  /request-admin:
+ *    post:
+ *      tags: [User]
+ *      summary: 관리자 권한 요청
+ *      requestBody:
+ *        required: true
+ *        content:
+ *          application/json:
+ *            schema:
+ *              type: object
+ *              properties:
+ *                secretKey:
+ *                  type: string
+ *      responses:
+ *        "200":
+ *          description: 관리자로 승격되었습니다.
+ *        "401":
+ *          description: 비밀 키가 틀렸습니다.
+ *
+ *  /myprofile:
+ *    get:
+ *      tags: [User]
+ *      summary: 내 프로필 정보 조회
+ *      responses:
+ *        "200":
+ *          description: 프로필 정보 조회 성공
+ *
+ *  /user:
+ *    delete:
+ *      tags: [User]
+ *      summary: 사용자 삭제
+ *      requestBody:
+ *        required: true
+ *        content:
+ *          application/json:
+ *            schema:
+ *              type: object
+ *              properties:
+ *                userId:
+ *                  type: integer
+ *      responses:
+ *        "200":
+ *          description: 사용자 삭제 성공
+ *        "404":
+ *          description: 해당 사용자를 찾을 수 없습니다.
+ *
+ *    get:
+ *      tags: [User]
+ *      summary: 모든 사용자 조회
+ *      responses:
+ *        "200":
+ *          description: 사용자 목록 조회 성공
+ *        "404":
+ *          description: 사용자를 찾을 수 없습니다.
+ */
 
 router.post("/sign-up", checkExistEmail, async (req, res, next) => {
   const { email, password, passwordCheck, name } = req.body;
-  console.log(password);
   const hashedPassword = await bcrypt.hash(password, 10);
   if (password.length < 6) {
     return res
@@ -27,30 +179,34 @@ router.post("/sign-up", checkExistEmail, async (req, res, next) => {
       .status(400)
       .json({ messsage: "비밀번호를 다시 한번 확인해주세요." });
   }
-  //일단 db에 박고
-  //인증여부 컬럼을 만들어서
-  //
   let emailParam = {
-    toEmail: email, // 수신할 이메일
+    toEmail: email,
 
-    subject: "New Email From APD", // 메일 제목
+    subject: "New Email From APD",
 
-    text: `http://localhost:3000/linkValid?email=${email}&password=${hashedPassword}&name=${name}`, // 메일 내용
+    text: `http://localhost:3000/linkValid?email=${email}&password=${hashedPassword}&name=${name}`,
   };
-  client.set()
   mail.sendGmail(emailParam);
   return res.status(200).json({ message: "이메일 전송 완료" });
 });
 
-router.get("/linkValid", async (req, res) => {
-  const validNum = req.body
-
-  const { email, password, name } = req.query;
-  console.log(email);
+router.post("/easy-sign-up", checkExistEmail, async (req, res, next) => {
+  const { email, password, passwordCheck, name } = req.body;
+  const hashedPassword = await bcrypt.hash(password, 10);
+  if (password.length < 6) {
+    return res
+      .status(400)
+      .json({ messsage: `비밀번호가 6자 이상이여야 합니다.` });
+  }
+  if (password !== passwordCheck) {
+    return res
+      .status(400)
+      .json({ messsage: "비밀번호를 다시 한번 확인해주세요." });
+  }
   const user = await prisma.user.create({
     data: {
       email,
-      password,
+      password: hashedPassword,
       name,
     },
   });
@@ -59,11 +215,27 @@ router.get("/linkValid", async (req, res) => {
   res.status(201).json({ data: response });
 });
 
+router.get("/linkValid", async (req, res) => {
+  try {
+    const { email, password, name } = req.query;
+    const user = await prisma.user.create({
+      data: {
+        email,
+        password,
+        name,
+      },
+    });
+    const response = { ...user };
+    delete response.password;
+    res.status(201).json({ data: response });
+  } catch {
+    return res.status(500).json({ message: "서버 에러 발생" });
+  }
+});
+
 router.post("/login", checkUserEmail, checkPassword, async (req, res, next) => {
   const { email, password } = req.body;
-  console.log(req.user);
   const jwtToken = await sign(req.user);
-  console.log(jwtToken);
   const bearerToken = `Bearer ${jwtToken.token}`;
   const bearerRefreshToken = `Bearer ${jwtToken.refreshToken}`;
 
@@ -79,52 +251,55 @@ router.post("/login", checkUserEmail, checkPassword, async (req, res, next) => {
 });
 
 router.post("/accessToken", async (req, res, next) => {
-  const token = req.cookies.RefreshToken; //리프레시 토큰을 token변수에 저장
-  console.log(token);
-  const verifyRefreshToken = await verify(token); //리프레시 토큰을 verify하고 payload 데이터를 받아온다
-  console.log(verifyRefreshToken);
-  const accessToken = await signRefresh(verifyRefreshToken);
-  console.log(accessToken);
-  const bearerToken = `Bearer ${accessToken.token}`;
-  res.cookie("Authorization", bearerToken, {
-    httpOnly: true,
-    maxAge: 1000 * 60 * 60 * 12,
-  });
-  return res.status(200).json({ message: "재발급 완료" });
+  try {
+    const token = req.cookies.RefreshToken;
+    if (!token) {
+      return res.status(404).json({ message: "토큰이 없습니다." });
+    }
+    const verifyRefreshToken = await verify(token);
+    const accessToken = await signRefresh(verifyRefreshToken);
+    const bearerToken = `Bearer ${accessToken.token}`;
+    res.cookie("Authorization", bearerToken, {
+      httpOnly: true,
+      maxAge: 1000 * 60 * 60 * 12,
+    });
+    return res.status(200).json({ message: "재발급 완료" });
+  } catch {
+    return res.status(500).json({ message: "서버 에러 발생" });
+  }
 });
 
 //login 후 admin 권한 요청이기 때문에 checkPassword 필요없음.
 router.post("/request-admin", AuthJwt, async (req, res, next) => {
   const { secretKey } = req.body;
   const { userId, role } = req.locals.user;
-  if (secretKey !== process.env.ADMIN_SECRET_KEY) {
-    return res.status(401).json({ message: "비밀 키가 틀렸습니다." });
-  }
-  if (role !== "admin") {
-    const result = await prisma.user.update({
-      where: {
-        userId: +userId,
-      },
-      data: {
-        role: "admin",
-      },
+  try {
+    if (secretKey !== process.env.ADMIN_SECRET_KEY) {
+      return res.status(401).json({ message: "비밀 키가 틀렸습니다." });
+    }
+    if (role !== "admin") {
+      const result = await prisma.user.update({
+        where: {
+          userId: +userId,
+        },
+        data: {
+          role: "admin",
+        },
+      });
+    }
+    const adminToken = await signAdmin(req.locals.user);
+    const bearerToken = `Bearer ${adminToken.token}`;
+    const cookie = res.cookie("Admin", bearerToken, {
+      httpOnly: true,
+      maxAge: 1000 * 60 * 60 * 12,
     });
+    return res.status(200).json({ message: "관리자로 승격되었습니다." });
+  } catch {
+    return res.status(500).json({ message: "서버 에러 발생" });
   }
-  console.log(name);
-  const adminToken = await signAdmin(req.locals.user);
-  console.log(adminToken);
-  const bearerToken = `Bearer ${adminToken.token}`;
-
-  const cookie = res.cookie("Admin", bearerToken, {
-    httpOnly: true,
-    maxAge: 1000 * 60 * 60 * 12,
-  });
-  console.log(cookie);
-  return res.status(200).json({ message: "관리자로 승격되었습니다." });
 });
 
 router.get("/myprofile", AuthJwt, async (req, res, next) => {
-  console.log(req.locals.user.userId);
   const user = req.locals.user;
   const response = { ...user };
   delete response.password;
@@ -164,71 +339,5 @@ router.get("/user", async (req, res, next) => {
     return res.status(200).json({ data: find });
   }
 });
-
-/* GET sign in page. */
-/**
- * @swagger
- * paths:
- *  /sign-up:
- *   post:
- *     tags: [User]
- *     summary: 사용자 등록
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               email:
- *                 type: string
- *               password:
- *                 type: string
- *               passwordCheck:
- *                 type: string
- *               name:
- *                 type: string
- *     responses:
- *       "201":
- *         description: 사용자 등록 성공
- *       "400":
- *         description: 잘못된 요청
- *
- *  /login:
- *   post:
- *     tags: [User]
- *     summary: 로그인
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               email:
- *                 type: string
- *               password:
- *                 type: string
- *     responses:
- *       "201":
- *         description: 로그인 성공
- *       "400":
- *         description: 잘못된 요청
- *  /accessToken:
- *     post:
- *       tags: [User]
- *     summary: 액세스 토큰 재발급
- *    responses:
- *         "200":
- *         description: 재발급 완료
- *
- *  /myprofile:
- *   get:
- *     tags: [User]
- *     summary: 내 프로필 정보
- *     responses:
- *       "200":
- *         description: 프로필 정보 조회 성공
- */
 
 export default router;

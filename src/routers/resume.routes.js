@@ -5,6 +5,116 @@ import { AuthJwt, AuthAdmin } from "../middlewares/auth.middleware.js";
 
 const router = express.Router();
 
+/**
+ * @swagger
+ * paths:
+ *  /resume:
+ *    post:
+ *      tags: [Resume]
+ *      summary: 이력서 생성
+ *      security:
+ *        - bearerAuth: []
+ *      requestBody:
+ *        required: true
+ *        content:
+ *          application/json:
+ *            schema:
+ *              type: object
+ *              properties:
+ *                title:
+ *                  type: string
+ *                introduce:
+ *                  type: string
+ *      responses:
+ *        "201":
+ *          description: 이력서 작성이 완료되었습니다.
+ *        "400":
+ *          description: 잘못된 요청
+ *
+ *    get:
+ *      tags: [Resume]
+ *      summary: 모든 이력서 조회
+ *      parameters:
+ *        - in: query
+ *          name: orderKey
+ *          schema:
+ *            type: string
+ *        - in: query
+ *          name: orderValue
+ *          schema:
+ *            type: string
+ *      responses:
+ *        "200":
+ *          description: 이력서 조회 성공
+ *        "404":
+ *          description: 이력서 조회 실패
+ *
+ *  /resume/{resumeId}:
+ *    get:
+ *      tags: [Resume]
+ *      summary: 특정 이력서 조회
+ *      parameters:
+ *        - in: path
+ *          name: resumeId
+ *          required: true
+ *          schema:
+ *            type: integer
+ *      responses:
+ *        "200":
+ *          description: 이력서 조회 성공
+ *        "404":
+ *          description: 이력서 조회 실패
+ *
+ *    patch:
+ *      tags: [Resume]
+ *      summary: 이력서 수정
+ *      security:
+ *        - bearerAuth: []
+ *      parameters:
+ *        - in: path
+ *          name: resumeId
+ *          required: true
+ *          schema:
+ *            type: integer
+ *      requestBody:
+ *        required: true
+ *        content:
+ *          application/json:
+ *            schema:
+ *              type: object
+ *              properties:
+ *                title:
+ *                  type: string
+ *                introduce:
+ *                  type: string
+ *      responses:
+ *        "200":
+ *          description: 이력서 수정 성공
+ *        "400":
+ *          description: 잘못된 요청
+ *        "401":
+ *          description: 권한 없음
+ *
+ *    delete:
+ *      tags: [Resume]
+ *      summary: 이력서 삭제
+ *      security:
+ *        - bearerAuth: []
+ *      parameters:
+ *        - in: path
+ *          name: resumeId
+ *          required: true
+ *          schema:
+ *            type: integer
+ *      responses:
+ *        "200":
+ *          description: 이력서 삭제 성공
+ *        "404":
+ *          description: 이력서 조회 실패
+ *        "401":
+ *          description: 권한 없음
+ */
+
 router.post("/resume", AuthJwt, async (req, res, next) => {
   const { title, introduce } = req.body;
   if (title === "" && introduce === "") {
@@ -140,136 +250,5 @@ router.delete(
     }
   }
 );
-//37462cd8a1e9622e037b0fc3e5b182b6
-/**
- * @swagger
- * paths:
- *  /resume:
- *    post:
- *      tags: [이력서]
- *      summary: 새 이력서 생성
- *      security:
- *        - bearerAuth: []
- *      requestBody:
- *        required: true
- *        content:
- *          application/json:
- *            schema:
- *              type: object
- *              required:
- *                - title
- *                - introduce
- *              properties:
- *                title:
- *                  type: string
- *                introduce:
- *                  type: string
- *      responses:
- *        "201":
- *          description: 이력서가 성공적으로 생성됨
- *        "400":
- *          description: 잘못된 요청
- *        "401":
- *          description: 인증 실패
- *        "500":
- *          description: 서버 내부 오류
- *    get:
- *      tags: [이력서]
- *      summary: 모든 이력서 조회
- *      parameters:
- *        - in: query
- *          name: orderKey
- *          schema:
- *            type: integer
- *          required: true
- *          description: 정렬 키
- *        - in: query
- *          name: orderValue
- *          schema:
- *            type: string
- *          required: true
- *          description: 정렬 값 (asc 또는 desc)
- *      responses:
- *        "200":
- *          description: 이력서 목록
- *        "400":
- *          description: 잘못된 요청
- *        "500":
- *          description: 서버 내부 오류
- *  /resume/{resumeId}:
- *    get:
- *      tags: [이력서]
- *      summary: 특정 이력서 조회
- *      parameters:
- *        - in: path
- *          name: resumeId
- *          required: true
- *          schema:
- *            type: integer
- *          description: 이력서의 고유 ID
- *      responses:
- *        "200":
- *          description: 이력서 상세 정보
- *        "404":
- *          description: 이력서를 찾을 수 없음
- *        "500":
- *          description: 서버 내부 오류
- *    patch:
- *      tags: [이력서]
- *      summary: 특정 이력서 수정
- *      security:
- *        - bearerAuth: []
- *      parameters:
- *        - in: path
- *          name: resumeId
- *          required: true
- *          schema:
- *            type: integer
- *          description: 이력서의 고유 ID
- *      requestBody:
- *        required: true
- *        content:
- *          application/json:
- *            schema:
- *              type: object
- *      responses:
- *        "200":
- *          description: 이력서가 성공적으로 수정됨
- *        "400":
- *          description: 잘못된 요청
- *        "401":
- *          description: 인증 실패
- *        "404":
- *          description: 이력서를 찾을 수 없음
- *        "500":
- *          description: 서버 내부 오류
- *    delete:
- *      tags: [이력서]
- *      summary: 특정 이력서 삭제
- *      security:
- *        - bearerAuth: []
- *      parameters:
- *        - in: path
- *          name: resumeId
- *          required: true
- *          schema:
- *            type: integer
- *          description: 이력서의 고유 ID
- *      responses:
- *        "200":
- *          description: 이력서가 성공적으로 삭제됨
- *        "401":
- *          description: 인증 실패
- *        "404":
- *          description: 이력서를 찾을 수 없음
- *        "500":
- *          description: 서버 내부 오류
- *
- * components:
- *  securitySchemes:
- *    bearerAuth:
- *      type: http
- *      scheme: bearer
- *      bearerFormat: JWT
- */
+
 export default router;

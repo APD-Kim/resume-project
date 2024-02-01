@@ -13,7 +13,7 @@ const swaggerDefinition = {
 const options = {
   swaggerDefinition,
   // API 파일 경로
-  apis: ["./src/routers/*.js"], // 예: './routes/*.js'
+  apis: ["./src/routers/*.js"],
 };
 
 const specs = swaggerJSDoc(options);
