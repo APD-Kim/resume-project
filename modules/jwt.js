@@ -13,6 +13,7 @@ export async function sign(user) {
   };
   const refreshTokenPayload = {
     userId: user.userId,
+    role: user.role,
   };
   const refreshToken = jwt.sign(refreshTokenPayload, secretKey, {
     expiresIn: "7d",
@@ -21,6 +22,19 @@ export async function sign(user) {
     //sign메소드를 통해 access token 발급!
     token: jwt.sign(payload, secretKey, options),
     refreshToken: refreshToken,
+  };
+  return result;
+}
+
+export async function signRefresh(user) {
+  /* 현재는 idx와 email을 payload로 넣었지만 필요한 값을 넣으면 됨! */
+  const payload = {
+    userId: user.userId,
+    role: user.role,
+  };
+  const result = {
+    //sign메소드를 통해 access token 발급!
+    token: jwt.sign(payload, secretKey, options),
   };
   return result;
 }
@@ -34,7 +48,7 @@ export async function signAdmin(user) {
   const refreshTokenPayload = {
     userId: user.userId,
   };
-  const refreshToken = jwt.sign(refreshTokenPayload, secretKey, {
+  const refreshToken = jwt.sign(refreshTokenPayload, adminSecretKey, {
     expiresIn: "7d",
   });
   const result = {
@@ -66,5 +80,3 @@ export async function verify(token) {
   }
   return decoded;
 }
-
-

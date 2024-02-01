@@ -27,6 +27,7 @@ export const AuthJwt = async (req, res, next) => {
   req.locals.user = await prisma.user.findFirst({
     where: { userId: +verifyUser.userId },
   });
+  const name = 1
   req.headers.authorization = req.cookies.Authorization;
   console.log(req.locals.user);
   next();
@@ -38,9 +39,6 @@ export const AuthAdmin = async (req, res, next) => {
   const token = req.cookies.Admin;
   req.locals = {};
   const verifyUser = await verify(token);
-  if (verifyUser.role !== "admin" || !token) {
-    return res.status(401).json({ message: "관리자가 아닙니다." });
-  }
   if (verifyUser === TOKEN_INVALID) {
     return res.status(401).json({ message: "로그인이 필요합니다." });
   }
@@ -52,7 +50,7 @@ export const AuthAdmin = async (req, res, next) => {
   if (verifyUser === TOKEN_EXPIRED) {
     return res.status(401).json({ message: "토큰이 만료되었습니다." });
   }
-  req.locals.user = await prisma.user.findFirst({
+  req.locals.admin = await prisma.user.findFirst({
     where: { userId: +verifyUser.userId },
   });
   req.headers.authorization = req.cookies.Authorization;
