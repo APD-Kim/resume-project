@@ -6,7 +6,7 @@
 - config폴더 = jwt options값과 비밀 키
   
 - # API 명세서 URL
-- 구글 Docs 공유 URL 추가
+- http://3.38.96.85:3000/api-docs/
 
 # ERD URL
 - https://drawsql.app/teams/kim-14/diagrams/private
