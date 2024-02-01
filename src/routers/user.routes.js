@@ -12,160 +12,6 @@ import { AuthJwt } from "../middlewares/auth.middleware.js";
 import mail from "../../modules/nodemailer.js";
 const router = express.Router();
 
-/**
- * @swagger
- * /easy-sign-up:
- *   post:
- *     tags: [User]
- *     summary: 간편 사용자 등록
- *     description: 이메일, 비밀번호, 이름을 사용하여 사용자를 등록합니다.
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - email
- *               - password
- *               - passwordCheck
- *               - name
- *             properties:
- *               email:
- *                 type: string
- *                 format: email
- *                 description: 사용자의 이메일
- *               password:
- *                 type: string
- *                 format: password
- *                 description: 사용자의 비밀번호
- *               passwordCheck:
- *                 type: string
- *                 format: password
- *                 description: 비밀번호 확인
- *               name:
- *                 type: string
- *                 description: 사용자의 이름
- *     responses:
- *       "201":
- *         description: 사용자 등록 성공
- *       "400":
- *         description: 잘못된 요청 (비밀번호 검증 실패 등)
- */
-
-/**
- * @swagger
- * paths:
- *  /sign-up:
- *    post:
- *      tags: [User]
- *      summary: 사용자 등록(이메일)
- *      requestBody:
- *        required: true
- *        content:
- *          application/json:
- *            schema:
- *              type: object
- *              properties:
- *                email:
- *                  type: string
- *                password:
- *                  type: string
- *                passwordCheck:
- *                  type: string
- *                name:
- *                  type: string
- *      responses:
- *        "201":
- *          description: 사용자 등록 성공
- *        "400":
- *          description: 잘못된 요청
- *
- *  /login:
- *    post:
- *      tags: [User]
- *      summary: 로그인
- *      requestBody:
- *        required: true
- *        content:
- *          application/json:
- *            schema:
- *              type: object
- *              properties:
- *                email:
- *                  type: string
- *                password:
- *                  type: string
- *      responses:
- *        "201":
- *          description: 로그인 성공
- *        "400":
- *          description: 잘못된 요청
- *
- *  /accessToken:
- *    post:
- *      tags: [User]
- *      summary: 액세스 토큰 재발급
- *      responses:
- *        "200":
- *          description: 재발급 완료
- *
- *  /request-admin:
- *    post:
- *      tags: [User]
- *      summary: 관리자 권한 요청
- *      requestBody:
- *        required: true
- *        content:
- *          application/json:
- *            schema:
- *              type: object
- *              properties:
- *                secretKey:
- *                  type: string
- *      responses:
- *        "200":
- *          description: 관리자로 승격되었습니다.
- *        "401":
- *          description: 비밀 키가 틀렸습니다.
- *
- *  /myprofile:
- *    get:
- *      tags: [User]
- *      summary: 내 프로필 정보 조회
- *      responses:
- *        "200":
- *          description: 프로필 정보 조회 성공
- *
- *  /user:
- *    delete:
- *      tags: [User]
- *      summary: 사용자 삭제
- *      requestBody:
- *        required: true
- *        content:
- *          application/json:
- *            schema:
- *              type: object
- *              properties:
- *                userId:
- *                  type: integer
- *      responses:
- *        "200":
- *          description: 사용자 삭제 성공
- *        "404":
- *          description: 해당 사용자를 찾을 수 없습니다.
- *
- *    get:
- *      tags: [User]
- *      summary: 모든 사용자 조회
- *      responses:
- *        "200":
- *          description: 사용자 목록 조회 성공
- *        "404":
- *          description: 사용자를 찾을 수 없습니다.
- */
-
 router.post("/sign-up", checkExistEmail, async (req, res, next) => {
   const { email, password, passwordCheck, name } = req.body;
   const hashedPassword = await bcrypt.hash(password, 10);
@@ -339,5 +185,159 @@ router.get("/user", async (req, res, next) => {
     return res.status(200).json({ data: find });
   }
 });
+
+/**
+ * @swagger
+ * /easy-sign-up:
+ *   post:
+ *     tags: [User]
+ *     summary: 간편 사용자 등록
+ *     description: 이메일, 비밀번호, 이름을 사용하여 사용자를 등록합니다.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *               - passwordCheck
+ *               - name
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 description: 사용자의 이메일
+ *               password:
+ *                 type: string
+ *                 format: password
+ *                 description: 사용자의 비밀번호
+ *               passwordCheck:
+ *                 type: string
+ *                 format: password
+ *                 description: 비밀번호 확인
+ *               name:
+ *                 type: string
+ *                 description: 사용자의 이름
+ *     responses:
+ *       "201":
+ *         description: 사용자 등록 성공
+ *       "400":
+ *         description: 잘못된 요청 (비밀번호 검증 실패 등)
+ */
+
+/**
+ * @swagger
+ * paths:
+ *  /sign-up:
+ *    post:
+ *      tags: [User]
+ *      summary: 사용자 등록(이메일)
+ *      requestBody:
+ *        required: true
+ *        content:
+ *          application/json:
+ *            schema:
+ *              type: object
+ *              properties:
+ *                email:
+ *                  type: string
+ *                password:
+ *                  type: string
+ *                passwordCheck:
+ *                  type: string
+ *                name:
+ *                  type: string
+ *      responses:
+ *        "201":
+ *          description: 사용자 등록 성공
+ *        "400":
+ *          description: 잘못된 요청
+ *
+ *  /login:
+ *    post:
+ *      tags: [User]
+ *      summary: 로그인
+ *      requestBody:
+ *        required: true
+ *        content:
+ *          application/json:
+ *            schema:
+ *              type: object
+ *              properties:
+ *                email:
+ *                  type: string
+ *                password:
+ *                  type: string
+ *      responses:
+ *        "201":
+ *          description: 로그인 성공
+ *        "400":
+ *          description: 잘못된 요청
+ *
+ *  /accessToken:
+ *    post:
+ *      tags: [User]
+ *      summary: 액세스 토큰 재발급
+ *      responses:
+ *        "200":
+ *          description: 재발급 완료
+ *
+ *  /request-admin:
+ *    post:
+ *      tags: [User]
+ *      summary: 관리자 권한 요청
+ *      requestBody:
+ *        required: true
+ *        content:
+ *          application/json:
+ *            schema:
+ *              type: object
+ *              properties:
+ *                secretKey:
+ *                  type: string
+ *      responses:
+ *        "200":
+ *          description: 관리자로 승격되었습니다.
+ *        "401":
+ *          description: 비밀 키가 틀렸습니다.
+ *
+ *  /myprofile:
+ *    get:
+ *      tags: [User]
+ *      summary: 내 프로필 정보 조회
+ *      responses:
+ *        "200":
+ *          description: 프로필 정보 조회 성공
+ *
+ *  /user:
+ *    delete:
+ *      tags: [User]
+ *      summary: 사용자 삭제
+ *      requestBody:
+ *        required: true
+ *        content:
+ *          application/json:
+ *            schema:
+ *              type: object
+ *              properties:
+ *                userId:
+ *                  type: integer
+ *      responses:
+ *        "200":
+ *          description: 사용자 삭제 성공
+ *        "404":
+ *          description: 해당 사용자를 찾을 수 없습니다.
+ *
+ *    get:
+ *      tags: [User]
+ *      summary: 모든 사용자 조회
+ *      responses:
+ *        "200":
+ *          description: 사용자 목록 조회 성공
+ *        "404":
+ *          description: 사용자를 찾을 수 없습니다.
+ */
 
 export default router;

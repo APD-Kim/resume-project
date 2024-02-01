@@ -11,11 +11,7 @@ const app = express();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-app.use(
-  "/api-docs",
-  swaggerUi.serve,
-  swaggerUi.setup(specs, { explorer: true })
-);
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(specs));
 
 app.use(cookieParser());
 app.use(express.json());

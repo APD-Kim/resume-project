@@ -7,6 +7,14 @@ const swaggerDefinition = {
     title: "Express API with Swagger",
     version: "1.0.0",
   },
+  components: {
+    securitySchemes: {
+      bearerAuth: {
+        type: "http",
+        scheme: "bearer",
+      },
+    },
+  },
 };
 
 // Swagger 옵션 설정
