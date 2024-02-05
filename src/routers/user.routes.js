@@ -1,188 +1,183 @@
 import express from "express";
 import bcrypt from "bcrypt";
 import {
-  checkExistEmail,
   checkPassword,
   checkUserEmail,
 } from "../middlewares/valid.middleware.js";
 import { prisma } from "../models/index.js";
 import "dotenv/config";
-import { sign, signAdmin, verify, signRefresh } from "../../modules/jwt.js";
+import { sign, signAdmin, verify } from "../modules/jwt.js";
 import { AuthJwt } from "../middlewares/auth.middleware.js";
-import mail from "../../modules/nodemailer.js";
+import mail from "../modules/nodemailer.js";
+import CustomError from "../../utils/errorHandler.js";
 const router = express.Router();
 
-router.post("/sign-up", checkExistEmail, async (req, res, next) => {
-  const { email, password, passwordCheck, name } = req.body;
-  const hashedPassword = await bcrypt.hash(password, 10);
-  if (password.length < 6) {
-    return res
-      .status(400)
-      .json({ messsage: `비밀번호가 6자 이상이여야 합니다.` });
-  }
-  if (password !== passwordCheck) {
-    return res
-      .status(400)
-      .json({ messsage: "비밀번호를 다시 한번 확인해주세요." });
-  }
-  let emailParam = {
-    toEmail: email,
-
-    subject: "New Email From APD",
-
-    text: `http://localhost:3000/linkValid?email=${email}&password=${hashedPassword}&name=${name}`,
-  };
-  mail.sendGmail(emailParam);
-  return res.status(200).json({ message: "이메일 전송 완료" });
-});
-
-router.post("/easy-sign-up", checkExistEmail, async (req, res, next) => {
-  const { email, password, passwordCheck, name } = req.body;
-  const hashedPassword = await bcrypt.hash(password, 10);
-  if (password.length < 6) {
-    return res
-      .status(400)
-      .json({ messsage: `비밀번호가 6자 이상이여야 합니다.` });
-  }
-  if (password !== passwordCheck) {
-    return res
-      .status(400)
-      .json({ messsage: "비밀번호를 다시 한번 확인해주세요." });
-  }
-  const user = await prisma.user.create({
-    data: {
-      email,
-      password: hashedPassword,
-      name,
-    },
-  });
-  const response = { ...user };
-  delete response.password;
-  res.status(201).json({ data: response });
-});
-
-router.get("/linkValid", async (req, res) => {
+router.post("/sign-up", async (req, res, next) => {
+  const { email, clientId, password, passwordCheck, name, role } = req.body;
   try {
-    const { email, password, name } = req.query;
+    if (role && !["user", "admin"].includes(role)) {
+      throw new CustomError(400, "등급이 올바르지 않습니다.");
+    }
+    if (!clientId) {
+      if (!email) {
+        throw new CustomError(400, "이메일은 필수값입니다.");
+      }
+      if (!password) {
+        throw new CustomError(400, "비밀번호는 필수값입니다.");
+      }
+      if (!passwordCheck) {
+        throw new CustomError(400, "비밀번호 확인은 필수값입니다.");
+      }
+      if (password.length < 6) {
+        throw new CustomError(400, "비밀번호가 6글자 이상이여야 합니다.");
+      }
+      if (password !== passwordCheck) {
+        throw new CustomError(400, "비밀번호를 다시 한번 확인해주세요.");
+      }
+    }
+    if (!name) {
+      throw new CustomError(400, "이름은 필수값입니다.");
+    }
+
+    //카카오 로그인 사용자
+    if (clientId) {
+      const user = await prisma.user.findFirst({
+        where: {
+          clientId,
+        },
+      });
+      if (user) {
+        throw new CustomError(400, "이미 가입된 사용자입니다..");
+      }
+      await prisma.user.create({
+        data: {
+          clientId,
+          name,
+          role,
+        },
+      });
+      return res.status(201).json({ message: "가입이 완료되었습니다." });
+    } else {
+      //이메일 로그인 사용자
+      const user = await prisma.user.findFirst({
+        where: {
+          email,
+        },
+      });
+      if (user) {
+        throw new CustomError(400, "이미 가입된 이메일입니다.");
+      }
+      const hashedPassword = await bcrypt.hash(password, 10);
+      let emailParam = {
+        toEmail: email,
+
+        subject: "New Email From APD",
+
+        text: `http://localhost:3000/valid?email=${email}&password=${hashedPassword}&name=${name}`,
+      };
+      mail.sendGmail(emailParam);
+    }
+
+    return res.status(200).json({ message: "이메일 전송 완료" });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get("/valid", async (req, res) => {
+  try {
+    const { email, password, name, role } = req.query;
     const user = await prisma.user.create({
       data: {
         email,
         password,
         name,
+        role,
       },
     });
-    const response = { ...user };
-    delete response.password;
+    const { password: userPassword, ...response } = user;
     res.status(201).json({ data: response });
-  } catch {
-    return res.status(500).json({ message: "서버 에러 발생" });
+  } catch (error) {
+    next(error);
   }
 });
-
-router.post("/login", checkUserEmail, checkPassword, async (req, res, next) => {
-  const { email, password } = req.body;
-  const jwtToken = await sign(req.user);
-  const bearerToken = `Bearer ${jwtToken.token}`;
-  const bearerRefreshToken = `Bearer ${jwtToken.refreshToken}`;
-
-  res.cookie("Authorization", bearerToken, {
-    httpOnly: true,
-    maxAge: 1000 * 60 * 60 * 12,
-  });
-  res.cookie("RefreshToken", bearerRefreshToken, {
-    httpOnly: true,
-    maxAge: 1000 * 60 * 60 * 24 * 7,
-  });
-  return res.status(201).json({ data: jwtToken.token });
-});
-
-router.post("/accessToken", async (req, res, next) => {
+//사용자 로그인
+router.post("/login", async (req, res, next) => {
+  const { email, password, clientId } = req.body;
+  let user;
   try {
-    const token = req.cookies.RefreshToken;
-    if (!token) {
-      return res.status(404).json({ message: "토큰이 없습니다." });
+    if (clientId) {
+      user = await prisma.user.findFirst({
+        where: {
+          clientId,
+        },
+      });
+      if (!user) {
+        throw new CustomError(400, "올바르지 않은 로그인 정보입니다.");
+      }
+    } else {
+      if (!email) {
+        throw new CustomError(400, "이메일은 필수값입니다.");
+      }
+      if (!password) {
+        throw new CustomError(400, "비밀번호는 필수값입니다.");
+      }
+      user = await prisma.user.findFirst({
+        where: { email },
+      });
+      if (!user) {
+        throw new CustomError(400, "이메일이 올바르지 않습니다.");
+      }
+      const comparePassword = await bcrypt.compare(password, user.password);
+      console.log(comparePassword);
+      if (!comparePassword) {
+        throw new CustomError(400, "비밀번호가 틀렸습니다.");
+      }
     }
-    const verifyRefreshToken = await verify(token);
-    const accessToken = await signRefresh(verifyRefreshToken);
-    const bearerToken = `Bearer ${accessToken.token}`;
+    const jwtToken = await sign(user);
+    const bearerToken = `Bearer ${jwtToken.token}`;
+    const bearerRefreshToken = `Bearer ${jwtToken.refreshToken}`;
+
     res.cookie("Authorization", bearerToken, {
       httpOnly: true,
       maxAge: 1000 * 60 * 60 * 12,
     });
-    return res.status(200).json({ message: "재발급 완료" });
-  } catch {
-    return res.status(500).json({ message: "서버 에러 발생" });
-  }
-});
-
-//login 후 admin 권한 요청이기 때문에 checkPassword 필요없음.
-router.post("/request-admin", AuthJwt, async (req, res, next) => {
-  const { secretKey } = req.body;
-  const { userId, role } = req.locals.user;
-  try {
-    if (secretKey !== process.env.ADMIN_SECRET_KEY) {
-      return res.status(401).json({ message: "비밀 키가 틀렸습니다." });
-    }
-    if (role !== "admin") {
-      const result = await prisma.user.update({
-        where: {
-          userId: +userId,
-        },
-        data: {
-          role: "admin",
-        },
-      });
-    }
-    const adminToken = await signAdmin(req.locals.user);
-    const bearerToken = `Bearer ${adminToken.token}`;
-    const cookie = res.cookie("Admin", bearerToken, {
+    res.cookie("RefreshToken", bearerRefreshToken, {
       httpOnly: true,
-      maxAge: 1000 * 60 * 60 * 12,
+      maxAge: 1000 * 60 * 60 * 24 * 7,
     });
-    return res.status(200).json({ message: "관리자로 승격되었습니다." });
-  } catch {
-    return res.status(500).json({ message: "서버 에러 발생" });
+    return res.status(201).json({ accessToken: jwtToken.token });
+  } catch (err) {
+    next(err);
   }
 });
 
-router.get("/myprofile", AuthJwt, async (req, res, next) => {
-  const user = req.locals.user;
-  const response = { ...user };
-  delete response.password;
-  res.status(200).json({ data: response });
-});
-
-router.delete("/user", async (req, res, next) => {
-  const { userId } = req.body;
-  const find = await prisma.user.findFirst({
-    where: {
-      userId: +userId,
-    },
-  });
-  if (!find) {
-    return res.status(404).json({ message: "해당 유저를 찾을 수 없습니다." });
-  }
-  const user = await prisma.user.delete({
-    where: {
-      userId: +userId,
-    },
-  });
-  console.log(user);
-  if (user) {
-    return res
-      .status(200)
-      .json({ message: `성공적으로 ${user.email}를 삭제했습니다.` });
-  }
-});
-
-router.get("/user", async (req, res, next) => {
-  const { userId } = req.body;
-  const find = await prisma.user.findMany({});
-  if (!find) {
-    return res.status(404).json({ message: "해당 유저를 찾을 수 없습니다." });
-  }
-  if (find) {
-    return res.status(200).json({ data: find });
+router.get("/user/me", AuthJwt, async (req, res, next) => {
+  const userId = req.user.userId;
+  try {
+    if (!userId) {
+      throw new CustomError(400, "요청이 올바르지 않습니다.");
+    }
+    const user = await prisma.user.findFirst({
+      where: {
+        userId: +userId,
+      },
+      select: {
+        clientId: true,
+        name: true,
+        email: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+    if (!user) {
+      throw new CustomError(404, "사용자를 찾을 수 없습니다.");
+    }
+    const response = { ...user };
+    delete response.password;
+    res.status(200).json({ data: response });
+  } catch (err) {
+    next(err);
   }
 });
 

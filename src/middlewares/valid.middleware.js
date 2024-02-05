@@ -2,17 +2,7 @@ import express from "express";
 import bcrypt from "bcrypt";
 import { prisma } from "../models/index.js";
 
-export const checkExistEmail = async (req, res, next) => {
-  const { email } = req.body;
-  const checkEmail = await prisma.user.findFirst({
-    where: { email },
-  });
-  if (checkEmail) {
-    return res.status(409).json({ message: "이미 이메일이 존재합니다." });
-  } else {
-    next();
-  }
-};
+
 
 export const checkUserEmail = async (req, res, next) => {
   const { email } = req.body;
