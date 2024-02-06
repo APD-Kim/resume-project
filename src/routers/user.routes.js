@@ -11,7 +11,7 @@ import { AuthJwt } from "../middlewares/auth.middleware.js";
 import mail from "../modules/nodemailer.js";
 import CustomError from "../../utils/errorHandler.js";
 const router = express.Router();
-
+//회원가입
 router.post("/sign-up", async (req, res, next) => {
   const { email, clientId, password, passwordCheck, name, role } = req.body;
   try {
@@ -38,7 +38,6 @@ router.post("/sign-up", async (req, res, next) => {
     if (!name) {
       throw new CustomError(400, "이름은 필수값입니다.");
     }
-
     //카카오 로그인 사용자
     if (clientId) {
       const user = await prisma.user.findFirst({
@@ -70,14 +69,11 @@ router.post("/sign-up", async (req, res, next) => {
       const hashedPassword = await bcrypt.hash(password, 10);
       let emailParam = {
         toEmail: email,
-
         subject: "New Email From APD",
-
         text: `http://localhost:3000/valid?email=${email}&password=${hashedPassword}&name=${name}`,
       };
       mail.sendGmail(emailParam);
     }
-
     return res.status(200).json({ message: "이메일 전송 완료" });
   } catch (error) {
     next(error);
@@ -152,7 +148,7 @@ router.post("/login", async (req, res, next) => {
   }
 });
 
-router.get("/user/me", AuthJwt, async (req, res, next) => {
+router.get("/mypage", AuthJwt, async (req, res, next) => {
   const userId = req.user.userId;
   try {
     if (!userId) {

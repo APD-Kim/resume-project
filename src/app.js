@@ -16,6 +16,7 @@ app.use("/auth", authRouter);
 app.use(resumeRouter);
 app.use(router);
 app.use((err, req, res, next) => {
+  console.error(err.message);
   const statusCode = err.statusCode ?? 500;
   const message = err.message ?? "서버 에러 발생";
   res.status(statusCode).json({ success: false, message: message });

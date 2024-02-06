@@ -9,15 +9,13 @@ const router = express.Router();
 router.post("/resume", AuthJwt, async (req, res, next) => {
   const { title, introduce } = req.body;
   const user = req.user;
-  if (!title || !introduce) {
-    return res
-      .status(400)
-      .json({ message: "제목 또는 소개 내용이 비어있습니다." });
-  }
   try {
+    if (!title || !introduce) {
+      throw new CustomError(404, "제목 또는 소개 내용은 필수값입니다.");
+    }
     const resume = await prisma.resume.create({
       data: {
-        userId: user.userId, // userId 필드에 직접 user의 id를 할당
+        userId: user.userId,
         title,
         introduce,
       },
@@ -25,27 +23,21 @@ router.post("/resume", AuthJwt, async (req, res, next) => {
     return res
       .status(201)
       .json({ message: "이력서 작성이 완료되었습니다.", resume });
-  } catch {
-    return res.status(500).json({ message: "서버에서 오류가 발생하였습니다." });
+  } catch (err) {
+    next(err);
   }
 });
 //이력서 조회
 router.get("/resume", async (req, res, next) => {
   const orderKey = req.query.orderKey ?? "resumeId";
   const orderValue = req.query.orderValue ?? "desc";
-  if (!["resumeId", "status", "createdAt"].includes(orderKey)) {
-    return res.status(400).json({
-      success: false,
-      message: "orderKey 가 올바르지 않습니다.",
-    });
-  }
-  if (!["asc", "desc"].includes(orderValue.toLowerCase())) {
-    return res.status(400).json({
-      success: false,
-      message: "orderValue 가 올바르지 않습니다.",
-    });
-  }
   try {
+    if (!["resumeId", "status", "createdAt"].includes(orderKey)) {
+      throw new CustomError(400, "orderKey가 올바르지 않습니다.");
+    }
+    if (!["asc", "desc"].includes(orderValue.toLowerCase())) {
+      throw new CustomError(400, "orderValue가 올바르지 않습니다.");
+    }
     const result = await prisma.resume.findMany({
       select: {
         resumeId: true,
@@ -59,29 +51,25 @@ router.get("/resume", async (req, res, next) => {
         },
         createdAt: true,
       },
-
       orderBy: {
         [orderKey]: orderValue.toLowerCase(),
       },
     });
     if (result.length === 0) {
-      return res.status(404).json({ message: "이력서 조회에 실패했습니다." });
+      throw new CustomError(404, "이력서를 찾을 수 없습니다..");
     }
     res.status(200).json({ data: result });
-  } catch {
-    return res.status(500).json({ message: "서버에서 오류가 발생하였습니다." });
+  } catch (err) {
+    next(err);
   }
 });
 //이력서 상세 조회
 router.get("/resume/:resumeId", async (req, res, next) => {
   const resumeId = req.params.resumeId;
-  if (!resumeId) {
-    return res.status(400).json({
-      success: false,
-      message: "resumeId는 필수값입니다.",
-    });
-  }
   try {
+    if (!resumeId) {
+      throw new CustomError(400, "resumeId는 필수값입니다.");
+    }
     const resume = await prisma.resume.findUnique({
       where: {
         resumeId: Number(resumeId),
@@ -100,39 +88,33 @@ router.get("/resume/:resumeId", async (req, res, next) => {
       },
     });
     if (!resume) {
-      return res
-        .status(404)
-        .json({ success: false, message: "이력서 조회에 실패했습니다." });
+      throw new CustomError(404, "이력서 조회에 실패했습니다.");
     }
     res.status(200).json({ data: resume });
-  } catch {
-    res.status(500).json({ message: "서버에서 오류가 발생하였습니다." });
+  } catch (err) {
+    next(err);
   }
 });
 
 router.patch("/resume/:resumeId", AuthJwt, async (req, res, next) => {
   const resumeId = req.params.resumeId;
   const user = req.user;
-  console.log(user);
   const { title, introduce } = req.body;
-  if (title === "" && introduce === "") {
-    return res.status(400).json({ message: "요청이 잘못되었습니다." });
-  }
-  const updateData = req.body;
   try {
+    if (title === "" && introduce === "") {
+      throw new CustomError(400, "요청이 잘못되었습니다.");
+    }
+    const updateData = req.body;
     const result = await prisma.resume.findFirst({
       where: {
         resumeId: +resumeId,
       },
     });
-    console.log(result);
     if (!result) {
-      return res.status(401).json({ message: "이력서를 찾을 수 없습니다." });
+      throw new CustomError(404, "이력서를 찾을 수 없습니다.");
     }
     if (result.userId !== user.userId && user.role === "user") {
-      return res
-        .status(401)
-        .json({ message: "다른사람이 작성한 이력서입니다." });
+      throw new CustomError(401, "다른 사람이 작성한 이력서입니다.");
     }
     await prisma.resume.update({
       data: {
@@ -143,8 +125,8 @@ router.patch("/resume/:resumeId", AuthJwt, async (req, res, next) => {
       },
     });
     res.status(200).json({ message: "성공적으로 수정하였습니다." });
-  } catch {
-    res.status(500).json({ message: "서버에서 오류가 발생하였습니다." });
+  } catch (err) {
+    next(err);
   }
   // res.status(200).json({ data: result });
 });
@@ -162,14 +144,10 @@ router.delete(
         },
       });
       if (!result) {
-        return res
-          .status(404)
-          .json({ message: "이력서 조회에 실패하였습니다." });
+        throw new CustomError(404, "이력서 조회에 실패했습니다.");
       }
       if (result.userId !== user.userId) {
-        return res
-          .status(401)
-          .json({ message: "다른사람이 작성한 이력서입니다." });
+        throw new CustomError(401, "다른 사람이 작성한 이력서입니다.");
       }
       await prisma.resume.delete({
         where: {
@@ -177,8 +155,8 @@ router.delete(
         },
       });
       res.status(200).json({ message: "삭제 완료하였습니다." });
-    } catch {
-      res.status(500).json({ message: "서버에 에러가 발생하였습니다." });
+    } catch (err) {
+      next(err);
     }
   }
 );

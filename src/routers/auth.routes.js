@@ -9,7 +9,7 @@ router.post("/", async (req, res, next) => {
   try {
     const refreshToken = req.cookies.RefreshToken;
     if (!refreshToken) {
-      return res.status(404).json({ message: "토큰이 없습니다." });
+      throw new CustomError(404, "토큰이 없습니다.");
     }
     const token = await verifyRefresh(refreshToken);
 
@@ -29,7 +29,7 @@ router.post("/", async (req, res, next) => {
       .status(200)
       .json({ message: "재발급 완료", data: { accessToken } });
   } catch (err) {
-    return res.status(500).json({ message: err.message });
+    next(err);
   }
 });
 
