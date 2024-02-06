@@ -11,7 +11,7 @@
 ## 데이터베이스 연결 URL
 - DATABASE_URL="mysql://username:password@hostname:port/database_name"
   
-- # API 명세서 URL
+# API 명세서 URL
 - http://3.38.96.85:3000/api-docs/
 
 # 패키지 매니저
