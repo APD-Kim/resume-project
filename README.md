@@ -12,7 +12,7 @@
 - DATABASE_URL="mysql://username:password@hostname:port/database_name"
   
 - # API 명세서 URL
-- 구글 Docs 공유 URL 추가
+- http://3.38.96.85:3000/api-docs/
 
 # 패키지 매니저
 - npm
