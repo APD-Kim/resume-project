@@ -1,13 +1,13 @@
 import express from "express";
 import { sign, verifyRefresh } from "../modules/jwt.js";
 import { prisma } from "../models/index.js";
-import CustomError from "../../utils/errorHandler.js";
+import CustomError from "../utils/errorHandler.js";
 
 const router = express.Router();
 //자동 로그인
 router.post("/", async (req, res, next) => {
   try {
-    const refreshToken = req.cookies.RefreshToken;
+    const refreshToken = req.cookies.refreshToken;
     if (!refreshToken) {
       throw new CustomError(404, "토큰이 없습니다.");
     }

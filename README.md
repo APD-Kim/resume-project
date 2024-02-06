@@ -1,12 +1,21 @@
 # 환경변수
-- PORT = 서버의 포트번호
-- ADMIN_SECRET_KEY = 어드민 권한을 요청할때 사용하는 비밀키
-- DATABASE_URL = 데이터 베이스를 prisma에서 사용하기 위한 url
-- SALT = bcrypt 해싱에 사용할 salt값
-- config폴더 = jwt options값과 비밀 키
+## 서버 설정
+- PORT= replace-port-number
+
+## 비밀번호 해시를 위한 bcrypt 솔트 라운드
+- SALT_ROUNDS= salt-number
+
+## 관리자 전용 비밀 키
+- ADMIN_SECRET_KEY="replace-with-your-own-secret-admin-key"
+
+## 데이터베이스 연결 URL
+- DATABASE_URL="mysql://username:password@hostname:port/database_name"
   
 - # API 명세서 URL
 - 구글 Docs 공유 URL 추가
+
+# 패키지 매니저
+- npm
 
 # ERD URL
 - https://drawsql.app/teams/kim-14/diagrams/private

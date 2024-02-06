@@ -2,11 +2,13 @@ import express from "express";
 import { prisma } from "../models/index.js";
 import "dotenv/config";
 import { AuthJwt } from "../middlewares/auth.middleware.js";
-import CustomError from "../../utils/errorHandler.js";
+import CustomError from "../utils/errorHandler.js";
 
 const router = express.Router();
+
 //이력서 생성
-router.post("/resume", AuthJwt, async (req, res, next) => {
+
+router.post("/", AuthJwt, async (req, res, next) => {
   const { title, introduce } = req.body;
   const user = req.user;
   try {
@@ -27,8 +29,10 @@ router.post("/resume", AuthJwt, async (req, res, next) => {
     next(err);
   }
 });
+
 //이력서 조회
-router.get("/resume", async (req, res, next) => {
+
+router.get("/", async (req, res, next) => {
   const orderKey = req.query.orderKey ?? "resumeId";
   const orderValue = req.query.orderValue ?? "desc";
   try {
@@ -63,8 +67,10 @@ router.get("/resume", async (req, res, next) => {
     next(err);
   }
 });
+
 //이력서 상세 조회
-router.get("/resume/:resumeId", async (req, res, next) => {
+
+router.get("/:resumeId", async (req, res, next) => {
   const resumeId = req.params.resumeId;
   try {
     if (!resumeId) {
@@ -96,7 +102,9 @@ router.get("/resume/:resumeId", async (req, res, next) => {
   }
 });
 
-router.patch("/resume/:resumeId", AuthJwt, async (req, res, next) => {
+//이력서 수정
+
+router.patch("/:resumeId", AuthJwt, async (req, res, next) => {
   const resumeId = req.params.resumeId;
   const user = req.user;
   const { title, introduce } = req.body;
@@ -128,38 +136,35 @@ router.patch("/resume/:resumeId", AuthJwt, async (req, res, next) => {
   } catch (err) {
     next(err);
   }
-  // res.status(200).json({ data: result });
 });
 
-router.delete(
-  "/resume/:resumeId",
-  AuthJwt, //어드민임을 증명
-  async (req, res, next) => {
-    const resumeId = req.params.resumeId;
-    const user = req.user;
-    try {
-      const result = await prisma.resume.findFirst({
-        where: {
-          resumeId: +resumeId,
-        },
-      });
-      if (!result) {
-        throw new CustomError(404, "이력서 조회에 실패했습니다.");
-      }
-      if (result.userId !== user.userId) {
-        throw new CustomError(401, "다른 사람이 작성한 이력서입니다.");
-      }
-      await prisma.resume.delete({
-        where: {
-          resumeId: +resumeId,
-        },
-      });
-      res.status(200).json({ message: "삭제 완료하였습니다." });
-    } catch (err) {
-      next(err);
+//이력서 삭제
+
+router.delete("/:resumeId", AuthJwt, async (req, res, next) => {
+  const resumeId = req.params.resumeId;
+  const user = req.user;
+  try {
+    const result = await prisma.resume.findFirst({
+      where: {
+        resumeId: +resumeId,
+      },
+    });
+    if (!result) {
+      throw new CustomError(404, "이력서 조회에 실패했습니다.");
     }
+    if (result.userId !== user.userId) {
+      throw new CustomError(401, "다른 사람이 작성한 이력서입니다.");
+    }
+    await prisma.resume.delete({
+      where: {
+        resumeId: +resumeId,
+      },
+    });
+    res.status(200).json({ message: "삭제 완료하였습니다." });
+  } catch (err) {
+    next(err);
   }
-);
+});
 
 /**
  * @swagger

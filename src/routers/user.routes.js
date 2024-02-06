@@ -1,17 +1,15 @@
 import express from "express";
 import bcrypt from "bcrypt";
-import {
-  checkPassword,
-  checkUserEmail,
-} from "../middlewares/valid.middleware.js";
 import { prisma } from "../models/index.js";
 import "dotenv/config";
-import { sign, signAdmin, verify } from "../modules/jwt.js";
+import { sign } from "../modules/jwt.js";
 import { AuthJwt } from "../middlewares/auth.middleware.js";
 import mail from "../modules/nodemailer.js";
-import CustomError from "../../utils/errorHandler.js";
+import CustomError from "../utils/errorHandler.js";
 const router = express.Router();
+
 //회원가입
+
 router.post("/sign-up", async (req, res, next) => {
   const { email, clientId, password, passwordCheck, name, role } = req.body;
   try {
@@ -46,7 +44,7 @@ router.post("/sign-up", async (req, res, next) => {
         },
       });
       if (user) {
-        throw new CustomError(400, "이미 가입된 사용자입니다..");
+        throw new CustomError(409, "이미 가입된 사용자입니다..");
       }
       await prisma.user.create({
         data: {
@@ -64,7 +62,7 @@ router.post("/sign-up", async (req, res, next) => {
         },
       });
       if (user) {
-        throw new CustomError(400, "이미 가입된 이메일입니다.");
+        throw new CustomError(409, "이미 가입된 이메일입니다.");
       }
       const hashedPassword = await bcrypt.hash(password, 10);
       let emailParam = {
@@ -72,7 +70,10 @@ router.post("/sign-up", async (req, res, next) => {
         subject: "New Email From APD",
         text: `http://localhost:3000/valid?email=${email}&password=${hashedPassword}&name=${name}`,
       };
-      mail.sendGmail(emailParam);
+      const sendmail = await mail.sendGmail(emailParam);
+      if (!sendmail) {
+        throw new CustomError(401, "이메일 전송에 실패하였습니다.");
+      }
     }
     return res.status(200).json({ message: "이메일 전송 완료" });
   } catch (error) {
@@ -80,9 +81,14 @@ router.post("/sign-up", async (req, res, next) => {
   }
 });
 
+//이메일 인증 api
+
 router.get("/valid", async (req, res) => {
   try {
     const { email, password, name, role } = req.query;
+    if (!email || !password || !name) {
+      throw new CustomError(400, "잘못된 요청입니다.");
+    }
     const user = await prisma.user.create({
       data: {
         email,
@@ -97,7 +103,9 @@ router.get("/valid", async (req, res) => {
     next(error);
   }
 });
+
 //사용자 로그인
+
 router.post("/login", async (req, res, next) => {
   const { email, password, clientId } = req.body;
   let user;
@@ -125,7 +133,6 @@ router.post("/login", async (req, res, next) => {
         throw new CustomError(400, "이메일이 올바르지 않습니다.");
       }
       const comparePassword = await bcrypt.compare(password, user.password);
-      console.log(comparePassword);
       if (!comparePassword) {
         throw new CustomError(400, "비밀번호가 틀렸습니다.");
       }
@@ -134,11 +141,11 @@ router.post("/login", async (req, res, next) => {
     const bearerToken = `Bearer ${jwtToken.token}`;
     const bearerRefreshToken = `Bearer ${jwtToken.refreshToken}`;
 
-    res.cookie("Authorization", bearerToken, {
+    res.cookie("authorization", bearerToken, {
       httpOnly: true,
       maxAge: 1000 * 60 * 60 * 12,
     });
-    res.cookie("RefreshToken", bearerRefreshToken, {
+    res.cookie("refreshToken", bearerRefreshToken, {
       httpOnly: true,
       maxAge: 1000 * 60 * 60 * 24 * 7,
     });
@@ -147,6 +154,8 @@ router.post("/login", async (req, res, next) => {
     next(err);
   }
 });
+
+//내 정보 조회
 
 router.get("/mypage", AuthJwt, async (req, res, next) => {
   const userId = req.user.userId;

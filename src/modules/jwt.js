@@ -70,12 +70,10 @@ export async function verify(token) {
   return decoded;
 }
 export async function verifyRefresh(token) {
-  console.log(2);
   let decoded;
   try {
     // verify를 통해 값 decode!
     let decodedToken = decodeURIComponent(token).replace("Bearer ", "");
-    console.log(1);
     decoded = jwt.verify(decodedToken, refreshSecretKey);
   } catch (err) {
     if (err.message === "jwt expired") {

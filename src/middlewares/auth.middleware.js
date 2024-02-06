@@ -5,7 +5,7 @@ const TOKEN_EXPIRED = -3;
 const TOKEN_INVALID = -2;
 
 export const AuthJwt = async (req, res, next) => {
-  const token = req.cookies.Authorization;
+  const token = req.cookies.authorization;
   if (!token) {
     return res.status(401).json({ message: "토큰이 없습니다." });
   }
