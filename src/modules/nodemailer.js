@@ -8,8 +8,6 @@ const mailSender = {
       service: "gmail",
       port: 587,
       host: "smtp.gmail.com",
-      secure: false,
-      requireTLS: true,
       auth: {
         user: info.user,
         pass: info.pass,

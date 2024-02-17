@@ -22,6 +22,7 @@ app.use((err, req, res, next) => {
   const boolean = err.boolean ?? false;
   res.status(statusCode).json({ success: boolean, message: message });
 });
+
 app.get("/", function (req, res) {
   res.send("Hello World");
 });

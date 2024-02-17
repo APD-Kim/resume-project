@@ -68,7 +68,7 @@ router.post("/sign-up", async (req, res, next) => {
       let emailParam = {
         toEmail: email,
         subject: "New Email From APD",
-        text: `http://localhost:3000/valid?email=${email}&password=${hashedPassword}&name=${name}`,
+        text:  `랜덤한 정수 6개`,
       };
       const sendmail = await mail.sendGmail(emailParam);
       if (!sendmail) {
@@ -81,7 +81,8 @@ router.post("/sign-up", async (req, res, next) => {
   }
 });
 
-//이메일 인증 api
+//이메일로만 로그인
+//회원가입 단계
 
 router.get("/valid", async (req, res) => {
   try {

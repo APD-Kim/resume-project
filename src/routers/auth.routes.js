@@ -11,11 +11,13 @@ router.post("/", async (req, res, next) => {
     if (!refreshToken) {
       throw new CustomError(404, "토큰이 없습니다.");
     }
+    //여기부터는 있다
     const token = await verifyRefresh(refreshToken);
 
     if (!token.userId) {
       res.status(401).end();
     }
+    //유저아이디가 있다
     const user = await prisma.user.findFirst({
       where: {
         userId: token.userId,
@@ -24,6 +26,7 @@ router.post("/", async (req, res, next) => {
     if (!user) {
       res.status(401).end();
     }
+    //db에도 유저가 있다
     const accessToken = await sign(token);
     return res
       .status(200)

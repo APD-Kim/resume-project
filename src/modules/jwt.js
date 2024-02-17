@@ -28,26 +28,6 @@ export async function sign(user) {
   return result;
 }
 
-export async function signAdmin(user) {
-  /* 현재는 idx와 email을 payload로 넣었지만 필요한 값을 넣으면 됨! */
-  const payload = {
-    userId: user.userId,
-    role: "admin",
-  };
-  const refreshTokenPayload = {
-    userId: user.userId,
-  };
-  const refreshToken = jwt.sign(refreshTokenPayload, adminSecretKey, {
-    expiresIn: "7d",
-  });
-  const result = {
-    //sign메소드를 통해 access token 발급!
-    token: jwt.sign(payload, secretKey, options),
-    refreshToken: refreshToken,
-  };
-  return result;
-}
-
 export async function verify(token) {
   let decoded;
   try {
@@ -55,6 +35,7 @@ export async function verify(token) {
     let decodedToken = decodeURIComponent(token).replace("Bearer ", "");
     decoded = jwt.verify(decodedToken, secretKey);
   } catch (err) {
+    console.log(err);
     if (err.message === "jwt expired") {
       console.log("expired token");
       return TOKEN_EXPIRED;
