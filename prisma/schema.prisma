@@ -10,13 +10,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-//Table : Game, User, , Userinfo, GameInfo, Comment
-//User와 Game은 1:N
-//User와 Userinfo는 1:1
-//User와 Comment는 1:N
-//Game과 Comment는 1:N
-//Game과 GameInfo는 1:1
-//
 model User {
   userId    Int      @id @default(autoincrement())
   clientId  String?
