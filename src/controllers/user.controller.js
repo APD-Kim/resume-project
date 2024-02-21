@@ -67,7 +67,7 @@ export class UserController {
       const jwtToken = await sign(user);
       const bearerToken = `Bearer ${jwtToken.token}`;
       const bearerRefreshToken = `Bearer ${jwtToken.refreshToken}`;
-      await redisCli.zAdd(`RefreshToken`, [{ score: new Date().getTime(), value: String(jwtToken.refreshToken) }]);
+      await redisCli.set(`RefreshToken:${user.userId}`, jwtToken.refreshToken, { EX: 60 * 60 * 24 * 7 });
       res.cookie("authorization", bearerToken, {
         httpOnly: true,
         maxAge: 1000 * 60 * 60 * 12,

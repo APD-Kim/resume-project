@@ -92,12 +92,12 @@ describe('Resume Repo Unit Test', () => {
     }
     mockTypeorm.createQueryBuilder = jest.fn().mockReturnThis();
     mockTypeorm.delete = jest.fn().mockReturnThis();
-    mockTypeorm.where = jest.fn().mockReturnThis()
+    mockTypeorm.where = jest.fn().mockReturnThis();
     mockTypeorm.execute = jest.fn().mockResolvedValue(mockReturn);
-    const resume = await resumeRepository.deleteResumeByResumeId(updateParams.resumeId)
-    expect(mockTypeorm.delete).toHaveBeenCalledWith("resumes")
-    expect(mockTypeorm.where).toHaveBeenCalledWith({ resumeId: updateParams.resumeId })
-    expect(mockTypeorm.execute).toHaveBeenCalledTimes(1)
+    const resume = await resumeRepository.deleteResumeByResumeId(updateParams.resumeId);
+    expect(mockTypeorm.delete).toHaveBeenCalledWith("resumes");
+    expect(mockTypeorm.where).toHaveBeenCalledWith({ resumeId: updateParams.resumeId });
+    expect(mockTypeorm.execute).toHaveBeenCalledTimes(1);
     expect(resume).toEqual(mockReturn)
   })
 

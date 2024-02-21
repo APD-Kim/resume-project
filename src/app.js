@@ -9,7 +9,7 @@ import userRouter from "./routes/user.routes.js";
 import resumeRouter from "./routes/resume.routes.js";
 import authRouter from "./routes/auth.routes.js";
 import redis from "redis";
-
+import { apiTimeCheck } from "./middlewares/api-titme-check.js";
 const redisClient = redis.createClient({
   url: `${process.env.REDIS}`,
   legacyMode: true, // 반드시 설정 !!
@@ -30,6 +30,7 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(specs));
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(apiTimeCheck)
 app.use(dbMiddleware)
 app.use("/auth", authRouter);
 app.use("/resume", resumeRouter);

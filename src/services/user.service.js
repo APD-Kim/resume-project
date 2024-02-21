@@ -82,6 +82,7 @@ export class UserService {
     }
 
     const user = await this.userRepository.findUserByEmail(email);
+    console.log(user);
     if (!user) {
       throw new CustomError(401, '사용자를 찾을 수 없습니다.');
     }

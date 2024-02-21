@@ -9,6 +9,7 @@ import { UserEntity } from "../entity/User.js";
 import { UserController } from "../controllers/user.controller.js";
 import { UserRepository } from "../repositories/user.repository.js";
 import { UserService } from "../services/user.service.js";
+import { apiTimeCheck } from "../middlewares/api-titme-check.js";
 
 const router = express.Router();
 connectionPromise.then(() => {
